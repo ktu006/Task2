@@ -86,4 +86,7 @@ data02 %>%
 ```
 
 
-Graph shows how many comapnies have been registered per month in Finmark, Nordland and Troms in 2019. The smallest number of companies were registered in Finmark and the biggest amount of companies were registered in Nordland, Troms county is located at the 2-nd place between these 3 counties. During 2019, 2206 companies were registered in these 3 counties.
+Graph shows how many comapnies have been registered per month in Finmark, Nordland and Troms in 2019. 
+The smallest number of companies were registered in Finmark and the biggest amount of companies were registered in Nordland.
+Troms county is located at the 2-nd place between these 3 counties. 
+During 2019, 2206 companies were registered in these 3 counties.
