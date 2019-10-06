@@ -1,0 +1,89 @@
+---
+title: "Task2"
+author: "Kirill Tumanov"
+date: "04 10 2019"
+output: 
+  html_document:
+    theme: journal
+    highlight: haddock
+    toc: true
+    toc_float: false
+    toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plyr)
+library(rvest)
+```
+#Task
+
+How many companies have been registered per month, per county in 2019?
+```{r}
+url <- read_html ("https://w2.brreg.no/kunngjoring/kombisok.jsp?datoFra=01.01.2019&datoTil=25.09.2019&id_region=100&id_fylke=-+-+-&id_niva1=2&id_bransje1=0")
+#make a table
+data_prep <- html_nodes(url, xpath = "//table")
+data01 <- as.data.frame(html_table(html_nodes(data_prep, "table"))) 
+```
+
+## Cleaning Data in R
+```{r}
+#variables
+names(data01) <- c("x1","company","county","number","x3","date","x4","type","x5")
+data01 <- data01[,c("company","county","number","date","type")]
+```
+
+#Sort by 3 counties
+```{r}
+#create rows for counties
+nord_row <- which(grepl("Nordland", data01$county))
+troms_row <- which(grepl("Troms", data01$county))
+fin_row <- which(grepl("Finnmark", data01$county))
+data01$county[c(nord_row:troms_row-1)] <- "Nordland"
+data01$county[c(troms_row:fin_row-1)] <- "Troms"
+data01$county[c(fin_row:nrow(data01))] <- "Finnmark"
+#delete excess lines
+data01 <- data01[-c(1:6,1060,1061,1814,1815,2227), ]
+```
+
+#Format
+```{r}
+data01 <- data01 %>%
+  mutate (date = as.Date(date,format("%d.%m.%Y")))
+#delete "Rettelse av foretaksnavn"
+data01 <- data01[!data01$type=="Rettelse av foretaksnavn",]
+```
+
+#Preparing for a plot
+```{r}
+#make a comfortable format for date
+  data02 <- data01 %>%
+  mutate(month = lubridate::month(date)) %>%
+  mutate(month = paste0("2019","-",month,"-","01")) %>%
+  mutate(month = lubridate::ymd(month)) %>%
+  ddply(c("county", "month"), summarise, amount=as.numeric(length(company)))
+
+```
+
+##Plot
+```{r}
+data02 %>%
+  ggplot(aes(x=month,y=amount, color=county, group=county)) +
+  facet_grid(~county) +
+  geom_point() +
+   geom_line() +
+  labs(x = "Months in 2019", y = "Number of new companies", title = "Amount of new companies registered per month, per county in 2019") +
+scale_y_continuous(limits =  c(0,150),
+                     breaks=seq(0, 150, by = 20))
+```
+
+#Total amount of companies
+```{r} 
+data02 %>%
+  group_by(county) %>%
+  summarise(total=sum(amount))
+```
+
+
+Graph shows how many comapnies have been registered per month in Finmark, Nordland and Troms in 2019. The smallest number of companies were registered in Finmark and the biggest amount of companies were registered in Nordland, Troms county is located at the 2-nd place between these 3 counties. During 2019, 2206 companies were registered in these 3 counties.
